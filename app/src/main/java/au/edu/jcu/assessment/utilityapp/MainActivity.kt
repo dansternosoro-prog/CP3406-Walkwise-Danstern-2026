@@ -34,6 +34,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import au.edu.jcu.assessment.utilityapp.ui.theme.MobileTech_UtilityAppTheme
 
 class MainActivity : ComponentActivity() {
@@ -51,13 +52,10 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun UtilityApp() {
+    val walkWiseViewModel: WalkWiseViewModel = viewModel()
     var selectedTab by remember { mutableStateOf("WalkWise") }
 
     // Settings shared between both screens.
-    var maximumTemperature by remember { mutableFloatStateOf(30f) }
-    var maximumUvIndex by remember { mutableFloatStateOf(5f) }
-    var allowLightRain by remember { mutableStateOf(true) }
-
     Scaffold(
         bottomBar = {
             NavigationBar {
@@ -94,24 +92,18 @@ fun UtilityApp() {
         ) {
             when (selectedTab) {
                 "WalkWise" -> UtilityScreen(
-                    maximumTemperature = maximumTemperature,
-                    maximumUvIndex = maximumUvIndex,
-                    allowLightRain = allowLightRain
+                    maximumTemperature = walkWiseViewModel.maximumTemperature,
+                    maximumUvIndex = walkWiseViewModel.maximumUvIndex,
+                    allowLightRain = walkWiseViewModel.allowLightRain
                 )
 
                 "Settings" -> SettingsScreen(
-                    maximumTemperature = maximumTemperature,
-                    onMaximumTemperatureChange = {
-                        maximumTemperature = it
-                    },
-                    maximumUvIndex = maximumUvIndex,
-                    onMaximumUvChange = {
-                        maximumUvIndex = it
-                    },
-                    allowLightRain = allowLightRain,
-                    onAllowLightRainChange = {
-                        allowLightRain = it
-                    }
+                    maximumTemperature = walkWiseViewModel.maximumTemperature,
+                    onMaximumTemperatureChange = walkWiseViewModel::updateMaximumTemperature,
+                    maximumUvIndex = walkWiseViewModel.maximumUvIndex,
+                    onMaximumUvChange = walkWiseViewModel::updateMaximumUvIndex,
+                    allowLightRain = walkWiseViewModel.allowLightRain,
+                    onAllowLightRainChange = walkWiseViewModel::updateAllowLightRain
                 )
             }
         }
