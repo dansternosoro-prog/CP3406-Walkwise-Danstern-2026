@@ -27,7 +27,6 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -52,10 +51,13 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun UtilityApp() {
-    val walkWiseViewModel: WalkWiseViewModel = viewModel()
+    val walkWiseViewModel: WalkWiseViewModel = viewModel(
+        factory = WalkWiseViewModelFactory(
+            AppContainer.weatherRepository
+        )
+    )
     var selectedTab by remember { mutableStateOf("WalkWise") }
 
-    // Settings shared between both screens.
     Scaffold(
         bottomBar = {
             NavigationBar {
@@ -94,7 +96,14 @@ fun UtilityApp() {
                 "WalkWise" -> UtilityScreen(
                     maximumTemperature = walkWiseViewModel.maximumTemperature,
                     maximumUvIndex = walkWiseViewModel.maximumUvIndex,
-                    allowLightRain = walkWiseViewModel.allowLightRain
+                    allowLightRain = walkWiseViewModel.allowLightRain,
+                    currentTemperature = walkWiseViewModel.currentTemperature,
+                    currentUvIndex = walkWiseViewModel.currentUvIndex,
+                    rainChance = walkWiseViewModel.rainChance,
+                    windSpeed = walkWiseViewModel.windSpeed,
+                    isLoading = walkWiseViewModel.isLoading,
+                    errorMessage = walkWiseViewModel.errorMessage,
+                    onRefresh = walkWiseViewModel::refreshWeather
                 )
 
                 "Settings" -> SettingsScreen(
@@ -114,15 +123,15 @@ fun UtilityApp() {
 fun UtilityScreen(
     maximumTemperature: Float,
     maximumUvIndex: Float,
-    allowLightRain: Boolean
+    allowLightRain: Boolean,
+    currentTemperature: Double,
+    currentUvIndex: Double,
+    rainChance: Int,
+    windSpeed: Double,
+    isLoading: Boolean,
+    errorMessage: String?,
+    onRefresh: () -> Unit
 ) {
-    // Temporary values used while we build the interface.
-    // These will be replaced with live API data.
-    val currentTemperature = 26.0
-    val currentUvIndex = 4.2
-    val rainChance = 20
-    val windSpeed = 12
-
     val maximumRainChance = if (allowLightRain) 40 else 10
     val rainIsAcceptable = rainChance <= maximumRainChance
 
@@ -214,19 +223,27 @@ fun UtilityScreen(
             )
         }
 
-        Button(
-            onClick = {
-                // Live refresh will be connected to the API later.
-            },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Refresh conditions")
+        if (errorMessage != null) {
+            Text(
+                text = errorMessage,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodyMedium
+            )
         }
 
-        Text(
-            text = "Live weather connection will be added next.",
-            style = MaterialTheme.typography.bodySmall
-        )
+        Button(
+            onClick = onRefresh,
+            enabled = !isLoading,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(
+                if (isLoading) {
+                    "Loading..."
+                } else {
+                    "Refresh conditions"
+                }
+            )
+        }
     }
 }
 
