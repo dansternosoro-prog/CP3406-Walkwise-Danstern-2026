@@ -132,6 +132,7 @@ fun UtilityScreen(
     errorMessage: String?,
     onRefresh: () -> Unit
 ) {
+
     val maximumRainChance = if (allowLightRain) 40 else 10
     val rainIsAcceptable = rainChance <= maximumRainChance
 
