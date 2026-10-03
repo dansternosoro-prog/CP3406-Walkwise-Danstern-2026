@@ -1,9 +1,13 @@
 package au.edu.jcu.assessment.utilityapp
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,6 +29,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
@@ -39,6 +44,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import au.edu.jcu.assessment.utilityapp.ui.theme.MobileTech_UtilityAppTheme
 import java.util.Locale
@@ -66,6 +72,31 @@ fun UtilityApp() {
             context
         )
     )
+
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            walkWiseViewModel.useMyLocation()
+        } else {
+            walkWiseViewModel.locationPermissionDenied()
+        }
+    }
+
+    val requestLocation: () -> Unit = {
+        if (
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            walkWiseViewModel.useMyLocation()
+        } else {
+            locationPermissionLauncher.launch(
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            )
+        }
+    }
 
     var selectedTab by remember { mutableStateOf("WalkWise") }
 
@@ -118,7 +149,13 @@ fun UtilityApp() {
                     windSpeed = walkWiseViewModel.windSpeed,
                     isLoading = walkWiseViewModel.isLoading,
                     errorMessage = walkWiseViewModel.errorMessage,
-                    onRefresh = walkWiseViewModel::refreshWeather
+                    onRefresh = walkWiseViewModel::refreshWeather,
+                    locationLabel = walkWiseViewModel.locationLabel,
+                    locationMessage = walkWiseViewModel.locationMessage,
+                    isLocating = walkWiseViewModel.isLocating,
+                    hasWeatherData = walkWiseViewModel.hasWeatherData,
+                    lastUpdated = walkWiseViewModel.lastUpdated,
+                    onUseMyLocation = requestLocation
                 )
 
                 "Settings" -> SettingsScreen(
@@ -148,16 +185,28 @@ fun UtilityScreen(
     windSpeed: Double,
     isLoading: Boolean,
     errorMessage: String?,
-    onRefresh: () -> Unit
+    onRefresh: () -> Unit,
+    locationLabel: String = "Brisbane (default)",
+    locationMessage: String? = null,
+    isLocating: Boolean = false,
+    hasWeatherData: Boolean = true,
+    lastUpdated: String? = null,
+    onUseMyLocation: () -> Unit = {}
 ) {
     val maximumRainChance = if (allowLightRain) 40 else 10
 
     val reasons = buildList {
         if (currentTemperature > maximumTemperature) {
-            add("Temperature exceeds your ${maximumTemperature.toInt()}°C limit.")
+            add(
+                "Temperature exceeds your " +
+                        "${maximumTemperature.toInt()}°C limit."
+            )
         }
         if (currentUvIndex > maximumUvIndex) {
-            add("Today's maximum UV exceeds your ${maximumUvIndex.toInt()} limit.")
+            add(
+                "Today's maximum UV exceeds your " +
+                        "${maximumUvIndex.toInt()} limit."
+            )
         }
         if (rainChance > maximumRainChance) {
             add("Rain chance exceeds your $maximumRainChance% limit.")
@@ -169,21 +218,25 @@ fun UtilityScreen(
     val recommendationTitle = when {
         isLoading -> "Checking conditions"
         errorMessage != null -> "Unable to update weather"
-        conditionsAreSuitable -> "Good time for a walk"
+        !hasWeatherData -> "Weather not loaded"
+        conditionsAreSuitable -> "Within your walking preferences"
         else -> "Conditions exceed your limits"
     }
 
     val recommendationDetail = when {
-        isLoading -> "Fetching the latest weather for Brisbane."
+        isLoading -> "Fetching weather for $locationLabel."
         errorMessage != null ->
             "Try refreshing again. Displayed values may be out of date."
+        !hasWeatherData ->
+            "Refresh weather to check your walking outlook."
         conditionsAreSuitable ->
-            "Temperature, UV and rain chance are within your preferences."
+            "Temperature, today's maximum UV and daily rain chance " +
+                    "are within your preferences."
         else -> reasons.joinToString("\n")
     }
 
     val recommendationColor = when {
-        isLoading || errorMessage != null ->
+        isLoading || errorMessage != null || !hasWeatherData ->
             MaterialTheme.colorScheme.surface
         conditionsAreSuitable ->
             MaterialTheme.colorScheme.primaryContainer
@@ -197,7 +250,9 @@ fun UtilityScreen(
             .padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
             Text(
                 text = "WalkWise",
                 style = MaterialTheme.typography.headlineLarge,
@@ -205,8 +260,33 @@ fun UtilityScreen(
             )
 
             Text(
-                text = "Brisbane · Your walking outlook",
+                text = "$locationLabel · Your walking outlook",
                 style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+
+        OutlinedButton(
+            onClick = onUseMyLocation,
+            enabled = !isLoading && !isLocating,
+            shape = RoundedCornerShape(18.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 48.dp)
+        ) {
+            Text(
+                text = if (isLocating) {
+                    "Finding your location…"
+                } else {
+                    "Use my location"
+                }
+            )
+        }
+
+        if (locationMessage != null) {
+            Text(
+                text = locationMessage,
+                style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
@@ -253,15 +333,29 @@ fun UtilityScreen(
         ) {
             ConditionCard(
                 label = "Temperature",
-                value = if (isLoading) "—" else
-                    String.format(Locale.UK, "%.1f°C", currentTemperature),
+                value = if (isLoading || !hasWeatherData) {
+                    "—"
+                } else {
+                    String.format(
+                        Locale.UK,
+                        "%.1f°C",
+                        currentTemperature
+                    )
+                },
                 modifier = Modifier.weight(1f)
             )
 
             ConditionCard(
                 label = "Today's max UV",
-                value = if (isLoading) "—" else
-                    String.format(Locale.UK, "%.1f", currentUvIndex),
+                value = if (isLoading || !hasWeatherData) {
+                    "—"
+                } else {
+                    String.format(
+                        Locale.UK,
+                        "%.1f",
+                        currentUvIndex
+                    )
+                },
                 modifier = Modifier.weight(1f)
             )
         }
@@ -271,30 +365,53 @@ fun UtilityScreen(
             horizontalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             ConditionCard(
-                label = "Rain chance",
-                value = if (isLoading) "—" else "$rainChance%",
+                label = "Today's max rain chance",
+                value = if (isLoading || !hasWeatherData) {
+                    "—"
+                } else {
+                    "$rainChance%"
+                },
                 modifier = Modifier.weight(1f)
             )
 
             ConditionCard(
                 label = "Wind",
-                value = if (isLoading) "—" else
-                    String.format(Locale.UK, "%.1f km/h", windSpeed),
+                value = if (isLoading || !hasWeatherData) {
+                    "—"
+                } else {
+                    String.format(
+                        Locale.UK,
+                        "%.1f km/h",
+                        windSpeed
+                    )
+                },
                 modifier = Modifier.weight(1f)
             )
         }
 
         Button(
             onClick = onRefresh,
-            enabled = !isLoading,
+            enabled = !isLoading && !isLocating,
             shape = RoundedCornerShape(18.dp),
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(min = 54.dp)
         ) {
             Text(
-                text = if (isLoading) "Updating weather…" else "Refresh weather",
+                text = if (isLoading) {
+                    "Updating weather…"
+                } else {
+                    "Refresh weather"
+                },
                 style = MaterialTheme.typography.titleMedium
+            )
+        }
+
+        if (lastUpdated != null) {
+            Text(
+                text = "Last updated: $lastUpdated",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
 
@@ -308,8 +425,8 @@ fun UtilityScreen(
 
         Text(
             text = "Weather source: Open-Meteo. The outlook compares " +
-                    "temperature, UV and rain chance with your preferences. " +
-                    "Wind is shown for information.",
+                    "current temperature, today's maximum UV and rain chance " +
+                    "with your preferences. Wind is shown for information.",
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             style = MaterialTheme.typography.bodySmall
         )
@@ -365,7 +482,9 @@ fun SettingsScreen(
             .padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
             Text(
                 text = "Preferences",
                 style = MaterialTheme.typography.headlineLarge,
