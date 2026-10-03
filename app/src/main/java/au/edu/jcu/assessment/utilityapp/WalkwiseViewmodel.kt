@@ -69,8 +69,16 @@ class WalkWiseViewModel(
                     weather.daily.uvIndex.firstOrNull() ?: currentUvIndex
                 rainChance =
                     weather.daily.rainChance.firstOrNull() ?: rainChance
+            } catch (exception: kotlinx.coroutines.CancellationException) {
+                throw exception
             } catch (exception: Exception) {
-                errorMessage = "Unable to load live weather."
+                android.util.Log.e(
+                    "WalkWiseWeather",
+                    "Weather request failed",
+                    exception
+                )
+                errorMessage =
+                    "Unable to load weather: ${exception.localizedMessage ?: "Unknown error"}"
             } finally {
                 isLoading = false
             }
