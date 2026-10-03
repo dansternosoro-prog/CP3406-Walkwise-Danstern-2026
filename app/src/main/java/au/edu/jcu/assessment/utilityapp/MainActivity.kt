@@ -154,7 +154,7 @@ fun UtilityScreen(
             add("Temperature exceeds your ${maximumTemperature.toInt()}°C limit.")
         }
         if (currentUvIndex > maximumUvIndex) {
-            add("UV index exceeds your ${maximumUvIndex.toInt()} limit.")
+            add("Today's maximum UV exceeds your ${maximumUvIndex.toInt()} limit.")
         }
         if (rainChance > maximumRainChance) {
             add("Rain chance exceeds your $maximumRainChance% limit.")
@@ -256,7 +256,7 @@ fun UtilityScreen(
             )
 
             ConditionCard(
-                label = "UV index",
+                label = "Today's max UV",
                 value = if (isLoading) "—" else
                     String.format(Locale.UK, "%.1f", currentUvIndex),
                 modifier = Modifier.weight(1f)
