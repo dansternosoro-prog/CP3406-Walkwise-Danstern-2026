@@ -58,9 +58,12 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun UtilityApp() {
+    val context = androidx.compose.ui.platform.LocalContext.current
+
     val walkWiseViewModel: WalkWiseViewModel = viewModel(
         factory = WalkWiseViewModelFactory(
-            AppContainer.weatherRepository
+            AppContainer.weatherRepository,
+            context
         )
     )
 
