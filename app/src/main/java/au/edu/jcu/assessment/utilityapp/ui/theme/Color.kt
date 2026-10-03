@@ -2,10 +2,20 @@ package au.edu.jcu.assessment.utilityapp.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Purple80 = Color(0xFFD0BCFF)
-val PurpleGrey80 = Color(0xFFCCC2DC)
-val Pink80 = Color(0xFFEFB8C8)
+val WalkBackground = Color(0xFF0B0D14)
+val WalkSurface = Color(0xFF1C1F2A)
+val WalkSurfaceVariant = Color(0xFF11141D)
 
-val Purple40 = Color(0xFF6650a4)
-val PurpleGrey40 = Color(0xFF625b71)
-val Pink40 = Color(0xFF7D5260)
+val WalkLime = Color(0xFFCAFF45)
+val WalkOnLime = Color(0xFF172000)
+val WalkGreenContainer = Color(0xFF293719)
+
+val WalkText = Color(0xFFF4F5F8)
+val WalkMutedText = Color(0xFFB6BBC8)
+val WalkOutline = Color(0xFF454B5B)
+
+val WalkWarningContainer = Color(0xFF3B3020)
+val WalkWarningText = Color(0xFFFFDEA6)
+
+val WalkError = Color(0xFFFFB4AB)
+val WalkErrorContainer = Color(0xFF4A2025)
