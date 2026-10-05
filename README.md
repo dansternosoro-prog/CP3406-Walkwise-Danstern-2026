@@ -111,8 +111,13 @@ I completed the following checks during development:
 
 ## Screenshots
 
-Screenshots of the WalkWise and Settings screens will be added
-to this repository.
+### Weather and walking outlook
+
+![WalkWise weather screen](<Live weather screenshot 2.png>)
+
+### Walking preferences
+
+![WalkWise settings screen](<setting screenshot 2.png>)
 
 ## Limitations
 
