@@ -119,6 +119,13 @@ I completed the following checks during development:
 
 ![WalkWise settings screen](<setting screenshot 2.png>)
 
+### App icon
+![WalkWise app icon](<icon screenshot.png>)
+
+### Build and GitHub evidence
+![Successful build](<successful build screeshot.png>)
+![GitHub push](<push to Git screenshot.png>)
+
 ## Limitations
 
 - UV and rain values are daily maximum forecasts, rather than current readings.
