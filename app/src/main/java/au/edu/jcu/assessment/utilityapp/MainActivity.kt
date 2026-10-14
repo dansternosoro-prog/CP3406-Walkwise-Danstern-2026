@@ -227,19 +227,24 @@ fun UtilityScreen(
         isLoading -> "Fetching weather for $locationLabel."
         errorMessage != null ->
             "Try refreshing again. Displayed values may be out of date."
+
         !hasWeatherData ->
             "Refresh weather to check your walking outlook."
+
         conditionsAreSuitable ->
             "Temperature, today's maximum UV and daily rain chance " +
                     "are within your preferences."
+
         else -> reasons.joinToString("\n")
     }
 
     val recommendationColor = when {
         isLoading || errorMessage != null || !hasWeatherData ->
             MaterialTheme.colorScheme.surface
+
         conditionsAreSuitable ->
             MaterialTheme.colorScheme.primaryContainer
+
         else -> MaterialTheme.colorScheme.tertiaryContainer
     }
 
